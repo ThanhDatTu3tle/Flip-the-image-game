@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Game Lật Hình 4x4 - Demo Flip 3D</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sigmar+One&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --gap: 10px;
+            --board-size: min(1111px, 100vw);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: "Sigmar One", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("assets/background_image.jpg") no-repeat center/cover;
+            filter: blur(8px);
+            transform: scale(1.1);
+            z-index: 0;
+        }
+
+        .game-title {
+            width: 100%;
+            margin: 0 0 100px 0;
+            padding: 12px 0;
+            font-family: "Sigmar One", sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            text-align: center;
+            color: #b22222;
+            background: linear-gradient(90deg, #ffe259, #ffa751);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sigmar-one-regular {
+            font-family: "Sigmar One", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .roboto {
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+        }
+
+        .game-container {
+            position: relative;
+            z-index: 1;
+            /* đảm bảo game hiện rõ phía trên */
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: var(--board-size);
+        }
+
+        .board-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .board-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-board {
+            position: relative;
+            z-index: 1;
+        }
+
+        .wrap {
+            width: var(--board-size);
+            max-width: 1111px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            width: 100%;
+        }
+
+        /* mỗi card có perspective riêng để thấy depth */
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.05) rotateY(5deg);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            /* nổi lên chút khi hover */
+        }
+
+        /* giữ tỉ lệ vuông cho mỗi card */
+        .card-inner {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            transition: transform 600ms cubic-bezier(.22, .9, .15, 1);
+            transform-style: preserve-3d;
+            will-change: transform;
+            overflow: visible;
+            box-shadow: 0 6px 14px rgba(16, 24, 40, 0.06);
+        }
+
+        /* khi có class flipped → xoay 180 độ */
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-inner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            backface-visibility: hidden;
+            transition: opacity 0.2s linear;
+            z-index: 1;
+        }
+
+        /* khi card đang xoay (giữa 0 và 180) → bật mask */
+        .card-inner.is-flipping::after {
+            opacity: 0.4;
+            background: #000;
+        }
+
+        /* 2 mặt */
+        .card-front,
+        .card-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .card-front {
+            background: linear-gradient(180deg, #ffd54a 0%, #ffcc33 100%);
+            color: #6b2a00;
+            transform: none;
+            backface-visibility: hidden;
+        }
+
+        .card-back {
+            background: #fff;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+        }
+
+        .shape {
+            width: 80%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: "Roboto", sans-serif;
+            pointer-events: none;
+            clip-path: polygon(0% 15%, 22% 22%, 15% 0%, 85% 0%, 78% 22%, 100% 15%, 100% 85%, 78% 78%, 85% 100%, 15% 100%, 22% 78%, 0% 85%);
+            background: #ee0505ea;
+            color: #b10000;
+            font-weight: 900;
+            font-size: 20px;
+            padding: 8px;
+            line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12) inset;
+        }
+
+        .card-number {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            font-family: "Roboto", sans-serif;
+            background: rgba(0, 0, 0, 0.55);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 24px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* mặt sau chứa ảnh - xoay 180deg sẵn */
+        .card-back {
+            transform: rotateY(180deg);
+            background: #eee;
+        }
+
+        .card-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* matched (đã tìm đúng) → fade out */
+        .card.matched .card-inner {
+            transition: transform 350ms, opacity 350ms;
+            opacity: 0;
+            transform: scale(.92);
+            pointer-events: none;
+        }
+
+        /* popup */
+        .popup {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .popup.show {
+            display: flex;
+        }
+
+        .popup-box {
+            background: white;
+            margin-top: 50px;
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 100%;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(2, 6, 23, 0.2);
+        }
+
+        .popup-box img {
+            max-width: 100%;
+            max-height: 93vh;
+            height: auto;
+            width: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .popup-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .btn-true {
+            background: #16a34a;
+            color: white
+        }
+
+        .btn-false {
+            background: #dc2626;
+            color: white
+        }
+
+        /* responsive */
+        @media (max-width:420px) {
+            .popup-box img {
+                height: 40vh
+            }
+
+            .shape {
+                font-size: 12px
+            }
+        }
+
+        /* tấm che riêng từng card */
+        .card-cover {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* khi card được matched */
+        .card.matched .card-inner,
+        .card.matched .card-cover {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <!-- <h1 class="game-title">NGHĨA SĨ - CHINH PHỤC</h1> -->
+        <h1 class="game-title">Sinh hoạt thứ 5 - TÌM HIỂU CÁC THÁNH</h1>
+        <div class="board-wrapper">
+            <div class="board-bg">
+                <img src="./assets_saints/result_image.jpg" alt="background">
+            </div>
+            <div id="gameBoard" class="game-board"></div>
+        </div>
+    </div>
+
+    <!-- popup -->
+    <div id="popup" class="popup" aria-hidden="true">
+        <div class="popup-box" role="dialog" aria-modal="true">
+            <img id="popupImage" src="" alt="Ảnh cặp đúng" />
+            <p id="question" style="margin:12px 0 0 0; font-weight:600; font-size: 24px;">Câu hỏi</p>
+            <div class="popup-actions">
+                <button id="btnTrue" class="btn btn-true">Đúng</button>
+                <button id="btnFalse" class="btn btn-false">Sai</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="popupWrong" class="popup popup-wrong" aria-hidden="true">
+        <div class="popup-box wrong-box">
+            <div class="wrong-icon">❌</div>
+        </div>
+    </div>
+
+    <script>
+        // const pairs = [
+        //     { image: "./assets/Hành trình sa mạc Mùa Phục Sinh 2024.jpg", question: "Sự kiện gì đây các bạn???" },
+        //     { image: "./assets/Hội thao ngành Thiếu 2023.jpg", question: "Các bạn Tân Nghĩa sĩ cứu các anh chị chuyến này nhé :>>" },
+        //     { image: "./assets/Chào đón Tân Nghĩa sĩ 2024-2025.jpg", question: "Hình như quen quen???" },
+        //     { image: "./assets/Hành trình sa mạc Mùa Giáng Sinh 2023.jpg", question: "Và đây là sự kiện..." },
+        //     { image: "./assets/Sa mạc Theo Bước Giêsu VI.jpg", question: "Đi đâu mà vui quá nè :>>" },
+        //     { image: "./assets/Sa mạc Theo Bước Giêsu VII.jpg", question: "Mới đây luôn, không biết nữa đành chịu..." },
+        //     { image: "./assets/Sa mạc Tông đồ đội trưởng.jpg", question: "Đi đâu mà nhiều màu khăn quá vậy nè???" },
+        //     { image: "./assets/Tiền sa mạc Theo Bước Giêsu VI.jpg", question: "Sự kiện gì đây các bạn???" },
+        //     { image: "./assets/Hành hương năm Thánh.jpg", question: "Anh chị em ngành Nghĩa mình cùng nhau trải qua hoạt động gì thú vị quá nè???" },
+        //     { image: "./assets/Tiền sa mạc Theo Bước Giêsu VII.jpg", question: "Vừa học vừa chơi???" }
+        // ];
+
+        const pairs = [
+            { image: "./assets_saints/Thánh Augustinô & Thánh Monica.jpg", question: "" },
+            { image: "./assets_saints/Thánh Carlo Acutis.jpg", question: "" },
+            { image: "./assets_saints/Thánh Đaminh Saviô.jpg", question: "" },
+            { image: "./assets_saints/Thánh Đaminh.jpg", question: "" },
+            { image: "./assets_saints/Thánh Gioan Bosco.jpg", question: "" },
+            { image: "./assets_saints/Thánh Tôma Aquinô.jpg", question: "" },
+            { image: "./assets_saints/Thánh Gioan Tẩy Giả.jpg", question: "" },
+            { image: "./assets_saints/Thánh Gioan tông đồ.jpg", question: "" },
+            { image: "./assets_saints/Thánh Giuse.jpg", question: "" },
+            { image: "./assets_saints/Thánh Inhaxiô (Loyola).jpg", question: "" },
+            { image: "./assets_saints/Thánh Phanxicô Assisi.jpg", question: "" },
+            { image: "./assets_saints/Thánh Phanxicô Saviê.jpg", question: "" },
+            { image: "./assets_saints/Thánh Phaolô.jpg", question: "" },
+            { image: "./assets_saints/Thánh Phêrô tông đồ.jpg", question: "" },
+            { image: "./assets_saints/Thánh Têrêsa Calcutta.jpg", question: "" },
+            { image: "./assets_saints/Thánh Têrêsa Hài  Đồng Giêsu.jpg", question: "" }
+        ];
+
+        // nhân đôi và shuffle
+        let cardsData = [];
+        pairs.forEach((p, i) => {
+            cardsData.push({ ...p, id: i });
+            cardsData.push({ ...p, id: i });
+        });
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+        cardsData = shuffle(cardsData);
+
+        const board = document.getElementById('gameBoard');
+        const popup = document.getElementById('popup');
+        const popupWrong = document.getElementById('popupWrong');
+        const popupImage = document.getElementById('popupImage');
+        const questionEl = document.getElementById('question');
+        const btnTrue = document.getElementById('btnTrue');
+        const btnFalse = document.getElementById('btnFalse');
+
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let pendingPair = []; // sẽ chứa 2 phần tử DOM của cặp đã lật
+
+        // Render board ONCE
+        function initBoard() {
+            board.innerHTML = "";
+            cardsData.forEach((cd, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = idx;
+                card.dataset.id = cd.id;
+
+                const cardCover = document.createElement('div');
+                cardCover.className = 'card-cover';
+
+                const cardInner = document.createElement('div');
+                cardInner.className = 'card-inner';
+
+                const front = document.createElement('div');
+                front.className = 'card-front';
+                const shape = document.createElement('div');
+                shape.className = 'shape';
+                shape.textContent = 'CHINH PHỤC';
+                front.appendChild(shape);
+
+                const num = document.createElement('div');
+                num.className = 'card-number';
+                num.textContent = idx + 1;
+                front.appendChild(num);
+
+                const back = document.createElement('div');
+                back.className = 'card-back';
+                const img = document.createElement('img');
+                img.src = cd.image;
+                img.alt = 'img';
+                back.appendChild(img);
+
+                cardInner.appendChild(front);
+                cardInner.appendChild(back);
+                card.appendChild(cardCover);
+                card.appendChild(cardInner);
+
+                // event: click toggle
+                card.addEventListener('click', () => handleCardClick(card));
+
+                board.appendChild(card);
+            });
+        }
+
+        function handleCardClick(card) {
+            if (lockBoard) return;
+            if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+            // click same card twice
+            if (firstCard && card === firstCard) return;
+
+            // toggle flip (thêm class -> CSS animation chạy)
+            card.classList.add('flipped');
+
+            if (!firstCard) {
+                firstCard = card;
+                return;
+            }
+
+            secondCard = card;
+            lockBoard = true;
+
+            // đợi animation flip kết thúc (match animation time trong CSS: 600ms)
+            setTimeout(() => {
+                checkMatch();
+            }, 620);
+        }
+
+        function checkMatch() {
+            const id1 = firstCard.dataset.id;
+            const id2 = secondCard.dataset.id;
+            if (id1 === id2) {
+                // đúng -> show popup với câu hỏi tương ứng
+                const q = pairs[id1].question;
+                questionEl.textContent = q;
+                pendingPair = [firstCard, secondCard];
+                popupImage.src = firstCard.querySelector('img').src;
+                popup.classList.add('show');
+                popup.setAttribute('aria-hidden', 'false');
+                // not marking matched yet — đợi user bấm True/False
+            } else {
+                // const popupWrong = document.getElementById("popupWrong");
+                // popupWrong.classList.add("show");
+
+                // sai -> lật ngược lại sau chút delay để người chơi thấy
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    // popupWrong.classList.remove("show");
+                    resetTurn();
+                }, 1500);
+            }
+            // nếu sai thì resetTurn từ trên, nếu đúng thì chờ popup xử lý
+            if (id1 !== id2) lockBoard = false;
+        }
+
+        function resetTurn() {
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            pendingPair = [];
+        }
+
+        function reshuffleRemaining() {
+            const cards = [...board.querySelectorAll('.card')].filter(c => !c.classList.contains('matched'));
+            if (cards.length <= 1) return; // ko cần shuffle
+
+            // lấy dữ liệu gốc từ cardsData
+            const remainingData = cards.map(c => cardsData[c.dataset.index]);
+
+            // shuffle
+            shuffle(remainingData);
+
+            // render lại nhưng chỉ cho các card chưa matched
+            cards.forEach((card, i) => {
+                const cd = remainingData[i];
+                card.dataset.id = cd.id;
+                card.querySelector('.card-back img').src = cd.image;
+            });
+        }
+
+        // popup true: hide matched
+        btnTrue.addEventListener('click', () => {
+            if (!pendingPair.length) return;
+            pendingPair.forEach(c => {
+                c.classList.add('matched');
+                // optional: remove event listener so can't click
+                c.replaceWith(c.cloneNode(true)); // đơn giản remove listeners
+            });
+            popup.classList.remove('show');
+            popup.setAttribute('aria-hidden', 'true');
+            resetTurn();
+        });
+
+        // popup false: lật lại 2 lá
+        btnFalse.addEventListener('click', () => {
+            if (!pendingPair.length) return;
+            pendingPair.forEach(c => c.classList.remove('flipped'));
+            popup.classList.remove('show');
+            popup.setAttribute('aria-hidden', 'true');
+
+            // Shuffle lại các lá chưa matched
+            reshuffleRemaining();
+
+            resetTurn();
+        });
+
+        // init
+        initBoard();
+    </script>
+</body>
+
+</html>
