@@ -317,6 +317,13 @@
 
         /* responsive */
         @media (max-width:767px) {
+            .board-wrapper {
+                position: relative;
+                width: var(--board-size);
+                margin-bottom: 4rem;
+                bottom: 4rem;
+            }
+
             .game-board {
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
