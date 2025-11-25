@@ -17,7 +17,7 @@
     <style>
         :root {
             --gap: 10px;
-            --board-size: min(1111px, 100vw);
+            --board-size: min(1000px, 100vw);
         }
 
         * {
@@ -53,7 +53,7 @@
             margin: 0 0 100px 0;
             padding: 12px 0;
             font-family: "Sigmar One", sans-serif;
-            font-size: 42px;
+            font-size: 1.8rem;
             font-weight: 900;
             text-align: center;
             color: #b22222;
@@ -115,7 +115,7 @@
 
         .game-board {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             width: 100%;
         }
 
@@ -316,7 +316,31 @@
         }
 
         /* responsive */
-        @media (max-width:420px) {
+        @media (max-width:767px) {
+            .game-board {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                width: 100%;
+            }
+
+            .game-title {
+                width: 100%;
+                margin: 0 50px 100px 0;
+                padding: 12px 0;
+                font-family: "Sigmar One", sans-serif;
+                font-size: 1rem;
+                font-weight: 900;
+                text-align: center;
+                color: #b22222;
+                background: linear-gradient(90deg, #ffe259, #ffa751);
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                text-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+                letter-spacing: 2px;
+                position: relative;
+                z-index: 2;
+            }
+
             .popup-box img {
                 height: 40vh
             }
@@ -394,15 +418,15 @@
             { image: "./assets_saints/Thánh Augustinô & Thánh Monica.jpg", question: "" },
             { image: "./assets_saints/Thánh Carlo Acutis.jpg", question: "" },
             { image: "./assets_saints/Thánh Đaminh Saviô.jpg", question: "" },
-            { image: "./assets_saints/Thánh Đaminh.jpg", question: "" },
+            // { image: "./assets_saints/Thánh Đaminh.jpg", question: "" },
             { image: "./assets_saints/Thánh Gioan Bosco.jpg", question: "" },
             { image: "./assets_saints/Thánh Tôma Aquinô.jpg", question: "" },
-            { image: "./assets_saints/Thánh Gioan Tẩy Giả.jpg", question: "" },
-            { image: "./assets_saints/Thánh Gioan tông đồ.jpg", question: "" },
+            // { image: "./assets_saints/Thánh Gioan Tẩy Giả.jpg", question: "" },
+            // { image: "./assets_saints/Thánh Gioan tông đồ.jpg", question: "" },
             { image: "./assets_saints/Thánh Giuse.jpg", question: "" },
             { image: "./assets_saints/Thánh Inhaxiô (Loyola).jpg", question: "" },
             { image: "./assets_saints/Thánh Phanxicô Assisi.jpg", question: "" },
-            { image: "./assets_saints/Thánh Phanxicô Saviê.jpg", question: "" },
+            // { image: "./assets_saints/Thánh Phanxicô Saviê.jpg", question: "" },
             { image: "./assets_saints/Thánh Phaolô.jpg", question: "" },
             { image: "./assets_saints/Thánh Phêrô tông đồ.jpg", question: "" },
             { image: "./assets_saints/Thánh Têrêsa Calcutta.jpg", question: "" },
